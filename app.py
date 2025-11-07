@@ -22,19 +22,29 @@ idx2class = {0:"O", 1:"R"}
 st.set_page_config(page_title="Waste Classifier")
 st.title("♻️ Waste Classifier App")
 
-img_file = st.file_uploader("Upload Waste Image", type=["jpg","jpeg","png"])
+option = st.radio("Select Input Method:", ["Upload Image", "Camera"])
 
-if img_file is not None:
-    img = Image.open(img_file).convert("RGB")
-    st.image(img, caption="Uploaded Image", width=300)
+img = None
+
+if option == "Upload Image":
+    img_file = st.file_uploader("Upload Waste Image", type=["jpg","jpeg","png"])
+    if img_file:
+        img = Image.open(img_file).convert("RGB")
+
+if option == "Camera":
+    cam_img = st.camera_input("Take a picture")
+    if cam_img:
+        img = Image.open(cam_img).convert("RGB")
+
+if img is not None:
+    st.image(img, width=300)
 
     x = transform(img).unsqueeze(0)
     with torch.no_grad():
         pred = model(x)
         _,p = torch.max(pred,1)
-
     label = idx2class[p.item()]
-    
+
     if label == "O":
         st.success("Prediction: **Organic Waste** ✅")
     else:
